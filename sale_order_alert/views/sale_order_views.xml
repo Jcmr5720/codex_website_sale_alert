@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_order_form_inform_button" model="ir.ui.view">
+            <field name="name">sale.order.form.inform.button</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/header" position="inside">
+                    <button name="action_inform_customer"
+                            type="object"
+                            string="Informar"
+                            class="btn-primary"
+                            attrs="{'invisible': [('invoice_status', '!=', 'invoiced')]}"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
