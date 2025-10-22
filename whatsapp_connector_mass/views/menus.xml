@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="whatsapp_mass_menu_root"
+        name="Whatsapp Batch"
+        sequence="70"
+        web_icon="whatsapp_connector_mass,static/description/icon.png"
+        />
+
+        <menuitem id="whatsapp_mass_menu_ws"
+            name="Batch Messaging"
+            parent="whatsapp_mass_menu_root"
+            sequence="10"
+            />
+
+        <menuitem id="whatsapp_mass_menu_contacts"
+            name="Contacts Lists"
+            parent="whatsapp_mass_menu_root"
+            sequence="20"
+            />
+            
+            <menuitem id="whatsapp_mass_list_menu"
+                name="Contacts Lists"
+                parent="whatsapp_mass_menu_contacts"
+                sequence="10"
+                />
+
+            <menuitem id="whatsapp_mass_contact_menu"
+                name="Contacts"
+                parent="whatsapp_mass_menu_contacts"
+                sequence="20"
+                />
+
+        <menuitem id="whatsapp_mass_campaigns"
+            name="Campaigns" 
+            parent="whatsapp_mass_menu_root" 
+            sequence="30"
+            />
+
+        <menuitem id="whatsapp_mass_menu_reporting"
+            name="Reporting"
+            parent="whatsapp_mass_menu_root"
+            sequence="40"
+            />
+
+        <menuitem id="whatsapp_mass_menu_configuration"
+            name="Configuration"
+            parent="whatsapp_mass_menu_root"
+            sequence="50"
+             />
+
+            <menuitem id="whatsapp_mass_menu_setting"
+                name="Configuration"
+                parent="whatsapp_mass_menu_configuration"
+                sequence="10"
+                groups="base.group_system" />
+
+            <menuitem id="whatsapp_mass_compaing_stages"
+                name="Campaign Stages"
+                parent="whatsapp_mass_menu_configuration" 
+                sequence="20"
+                action="utm.action_view_utm_stage"
+                 />
+        
+            <menuitem id="whatsapp_mass_compaing_tag_menu"
+                parent="whatsapp_mass_menu_configuration"
+                action="utm.action_view_utm_tag"
+                sequence="30"
+                 />
+
+            <record id="whatsapp_mass_template_action" model="ir.actions.act_window">
+                <field name="name">Message Templates</field>
+                <field name="res_model">mail.template</field>
+                <field name="view_mode">tree,form</field>
+                <field name="domain">[('name', 'ilike', 'ChatRoom')]</field>
+            </record>
+
+            <menuitem id="whatsapp_mass_template_menu"
+                name="Message Templates"
+                parent="whatsapp_mass_menu_configuration"
+                action="whatsapp_mass_template_action"
+                sequence="40"/>
+
+</odoo>
