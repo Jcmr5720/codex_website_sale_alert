@@ -80,8 +80,8 @@ class SaleOrder(models.Model):
             raise UserError(_('Tipo de alerta desconocido.'))
         return definitions[alert_type]['message']
 
+    @api.model
     def _get_alert_label(self, alert_type):
-        self.ensure_one()
         definitions = self._get_alert_definitions()
         return definitions.get(alert_type, {}).get('label', alert_type)
 
