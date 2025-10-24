@@ -119,7 +119,53 @@ class AcruxChatConversation(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        res = super(AcruxChatConversation, self).create(vals_list)
+        existing_records = self.env['acrux.chat.conversation']
+        create_vals = []
+        connector_cache = {}
+        default_conv_type = self._fields['conv_type'].default(self)
+        seen_keys = set()
+
+        for vals in vals_list:
+            vals = dict(vals)
+            connector_id = vals.get('connector_id')
+            number = vals.get('number')
+            conv_type = vals.get('conv_type') or default_conv_type
+
+            if connector_id and number and conv_type:
+                connector = connector_cache.get(connector_id)
+                if connector is None:
+                    connector = self.env['acrux.chat.connector'].browse(connector_id)
+                    connector_cache[connector_id] = connector
+
+                try:
+                    cleaned_number = connector.clean_id(number)
+                except Exception:
+                    cleaned_number = number
+
+                vals['number'] = cleaned_number
+                key = (connector_id, conv_type, cleaned_number)
+                domain = [
+                    ('number', '=', cleaned_number),
+                    ('conv_type', '=', conv_type),
+                    ('connector_id', '=', connector_id),
+                ]
+                conversation = self.search(domain, limit=1)
+                if conversation:
+                    existing_records |= conversation
+                    seen_keys.add(key)
+                    continue
+
+                if key in seen_keys:
+                    raise ValidationError(_('Number in connector has to be unique'))
+                seen_keys.add(key)
+
+            create_vals.append(vals)
+
+        res = self.env['acrux.chat.conversation']
+        if create_vals:
+            res = super(AcruxChatConversation, self).create(create_vals)
+
+        res |= existing_records
         for ret in res:
             if (self.env.context.get('is_from_wizard') or self.env.context.get('is_acrux_chat_room')) \
                     and not self.env.context.get('not_check_is_valid') \
