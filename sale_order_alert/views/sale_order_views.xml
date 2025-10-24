@@ -7,11 +7,11 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//form/header" position="inside">
-                    <t t-if="record.alert_sent_type_ids">
-                        <t t-foreach="record.alert_sent_type_ids.split(',')" t-as="alert_key">
+                    <t t-if="props.record and props.record.data.alert_sent_type_ids">
+                        <t t-foreach="props.record.data.alert_sent_type_ids.split(',')" t-as="alert_key">
                             <span t-if="alert_key"
                                   class="badge badge-info o_sale_alert_badge me-1">
-                                <t t-esc="record._get_alert_label(alert_key)"/>
+                                <t t-esc="env['sale.order']._get_alert_label(alert_key)"/>
                             </span>
                         </t>
                     </t>
