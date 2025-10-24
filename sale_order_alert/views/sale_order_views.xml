@@ -7,10 +7,19 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//form/header" position="inside">
-                    <button name="action_inform_customer"
-                            type="object"
+                    <t t-if="record.alert_sent_type_ids">
+                        <t t-foreach="record.alert_sent_type_ids.split(',')" t-as="alert_key">
+                            <span t-if="alert_key"
+                                  class="badge badge-info o_sale_alert_badge me-1">
+                                <t t-esc="record._get_alert_label(alert_key)"/>
+                            </span>
+                        </t>
+                    </t>
+                    <button name="%(action_sale_order_alert_wizard)d"
+                            type="action"
                             string="Informar"
                             class="btn-primary"
+                            context="{'default_order_id': active_id, 'active_id': active_id, 'active_model': 'sale.order'}"
                             attrs="{'invisible': [('invoice_status', '!=', 'invoiced')]}"/>
                 </xpath>
             </field>
