@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
 from collections import OrderedDict
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+
+
+_logger = logging.getLogger(__name__)
 
 
 class SaleOrder(models.Model):
@@ -115,7 +119,37 @@ class SaleOrder(models.Model):
 
         return True
 
+    def _auto_send_alert(self, alert_type, message=None):
+        existing_alerts = {
+            order.id: set(order.alert_log_ids.mapped('alert_type')) for order in self
+        }
+        for order in self:
+            if alert_type in existing_alerts.get(order.id, set()):
+                continue
+            try:
+                order._send_alert(alert_type, message=message)
+            except UserError as error:
+                _logger.info(
+                    'Se omitió el envío automático de la alerta %(alert_type)s para '
+                    'la orden %(order)s: %(error)s',
+                    {
+                        'alert_type': alert_type,
+                        'order': order.name or order.id,
+                        'error': error,
+                    },
+                )
+        return True
+
     def action_inform_customer(self):
         for order in self:
             order._send_alert('packing')
         return True
+
+    def write(self, vals):
+        to_inform = self.browse()
+        if 'invoice_status' in vals:
+            to_inform = self.filtered(lambda order: order.invoice_status != 'invoiced')
+        result = super().write(vals)
+        if to_inform:
+            to_inform.filtered(lambda order: order.invoice_status == 'invoiced')._auto_send_alert('packing')
+        return result

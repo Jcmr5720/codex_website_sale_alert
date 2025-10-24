@@ -6,6 +6,7 @@
     'summary': 'Extra notificaciones a cliente',
     'depends': [
         'sale_management',
+        'sale_stock',
         'whatsapp_connector_sale'],
     'data': [
         'security/ir.model.access.csv',
