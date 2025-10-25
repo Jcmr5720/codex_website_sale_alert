@@ -16,14 +16,17 @@ class SaleOrder(models.Model):
         'packing': {
             'label': _('Alistamiento'),
             'message': _('Tu pedido está siendo alistado.'),
+            'requires_invoice': False,
         },
         'shipped': {
             'label': _('Enviado'),
             'message': _('Tu pedido ha sido enviado.'),
+            'requires_invoice': False,
         },
         'delivered': {
             'label': _('Entregado'),
             'message': _('Tu pedido ha sido entregado.'),
+            'requires_invoice': True,
         },
     })
 
@@ -91,9 +94,11 @@ class SaleOrder(models.Model):
 
     def _send_alert(self, alert_type, message=None):
         self.ensure_one()
-        if alert_type not in dict(self._get_alert_selection()):
+        definitions = self._get_alert_definitions()
+        if alert_type not in definitions:
             raise UserError(_('Tipo de alerta desconocido.'))
-        if self.invoice_status != 'invoiced':
+        definition = definitions[alert_type]
+        if definition.get('requires_invoice', True) and self.invoice_status != 'invoiced':
             raise UserError(_('Solo se puede informar cuando la orden está facturada.'))
 
         conversation = self._ensure_whatsapp_conversation()
@@ -124,7 +129,8 @@ class SaleOrder(models.Model):
             order.id: set(order.alert_log_ids.mapped('alert_type')) for order in self
         }
         for order in self:
-            if alert_type in existing_alerts.get(order.id, set()):
+            sent_alerts = existing_alerts.setdefault(order.id, set())
+            if alert_type in sent_alerts:
                 continue
             try:
                 order._send_alert(alert_type, message=message)
@@ -138,6 +144,8 @@ class SaleOrder(models.Model):
                         'error': error,
                     },
                 )
+            else:
+                sent_alerts.add(alert_type)
         return True
 
     def action_inform_customer(self):
@@ -146,8 +154,19 @@ class SaleOrder(models.Model):
         return True
 
     def write(self, vals):
+        previous_states = {}
+        if 'state' in vals:
+            previous_states = {order.id: order.state for order in self}
         to_inform = self.filtered(lambda order: order.invoice_status != 'invoiced')
         result = super().write(vals)
+        orders_to_notify = self.env['sale.order']
+        if previous_states:
+            orders_to_notify |= self.filtered(
+                lambda order: order.state in ('sale', 'done')
+                and previous_states.get(order.id) != order.state
+            )
         if to_inform:
-            to_inform.filtered(lambda order: order.invoice_status == 'invoiced')._auto_send_alert('packing')
+            orders_to_notify |= to_inform.filtered(lambda order: order.invoice_status == 'invoiced')
+        if orders_to_notify:
+            orders_to_notify._auto_send_alert('packing')
         return result
