@@ -146,9 +146,7 @@ class SaleOrder(models.Model):
         return True
 
     def write(self, vals):
-        to_inform = self.browse()
-        if 'invoice_status' in vals:
-            to_inform = self.filtered(lambda order: order.invoice_status != 'invoiced')
+        to_inform = self.filtered(lambda order: order.invoice_status != 'invoiced')
         result = super().write(vals)
         if to_inform:
             to_inform.filtered(lambda order: order.invoice_status == 'invoiced')._auto_send_alert('packing')
