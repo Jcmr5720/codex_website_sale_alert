@@ -146,8 +146,21 @@ class SaleOrder(models.Model):
         return True
 
     def write(self, vals):
+        previous_states = {order.id: order.state for order in self}
         to_inform = self.filtered(lambda order: order.invoice_status != 'invoiced')
         result = super().write(vals)
+
         if to_inform:
-            to_inform.filtered(lambda order: order.invoice_status == 'invoiced')._auto_send_alert('packing')
+            to_inform.filtered(lambda order: order.invoice_status == 'invoiced')._auto_send_alert(
+                'packing',
+                message=_('Tu pedido se está alistando'),
+            )
+
+        transitioned_orders = self.filtered(
+            lambda order: previous_states.get(order.id) not in {'sale', 'done'}
+            and order.state in {'sale', 'done'}
+        )
+        if transitioned_orders:
+            transitioned_orders._auto_send_alert('packing', message=_('Tu pedido se está alistando'))
+
         return result
