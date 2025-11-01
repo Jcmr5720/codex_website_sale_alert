@@ -93,7 +93,7 @@ class SaleOrder(models.Model):
         self.ensure_one()
         if alert_type not in dict(self._get_alert_selection()):
             raise UserError(_('Tipo de alerta desconocido.'))
-        if self.invoice_status != 'invoiced':
+        if self.invoice_status != 'invoiced' and alert_type not in {'packing', 'shipped'}:
             raise UserError(_('Solo se puede informar cuando la orden está facturada.'))
 
         conversation = self._ensure_whatsapp_conversation()
